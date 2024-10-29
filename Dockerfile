@@ -4,27 +4,25 @@ FROM debian
 #Autor
 MAINTAINER Jimmy Faican
 
-# Para produccion descomentar 
-RUN apt-get update -y
+#INSTALLL JAVA 21
+ENV JAVA_HOME /opt/jdk-21
+ENV PATH $PATH:$JAVA_HOME/bin
+RUN apt update \
+    && apt upgrade -y \
+    && apt install  wget zip unzip postgresql-client -y \
+    && wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz \
+    && tar xvf openjdk-21.0.2_linux-x64_bin.tar.gz \
+    && rm openjdk-21.0.2_linux-x64_bin.tar.gz \
+    && mv jdk-21.0.2/ /opt/jdk-21
+# INSTALL WILDFLY 26
+ENV WILDFLY_VERSION 26.1.3.Final
+ENV JBOSS_HOME /opt/wildfly
 
-# java 1.8
-ADD jdk-8u251-linux-x64.tar.gz /opt
-RUN update-alternatives --install /usr/bin/java java /opt/jdk1.8.0_251/bin/java 200000
+RUN wget --no-check-certificate https://github.com/wildfly/wildfly/releases/download/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.zip \
+    && unzip wildfly-$WILDFLY_VERSION.zip \
+    && rm wildfly-$WILDFLY_VERSION.zip \
+    && mv wildfly-$WILDFLY_VERSION /opt/wildfly
 
-# wilfly
-ADD wildfly/wildfly-8.1.0.Final.tar.gz /opt
-ADD wildfly/standalone.xml /opt/wildfly/standalone/configuration/standalone.xml
-
-# PostgreSQL Client
-RUN apt install -y postgresql
-
-ENV JAVA_HOME /opt/jdk1.8.0_251
-ENV JAVA_OPTS "-Xms2G -Xmx12G -XX:NewSize=2G -Duser.language=es -Duser.region=es -Dcom.sun.jersey.server.impl.cdi.lookupExtensionInBeanManager=true"
-
-# localtime
-RUN rm -rf /etc/localtime
-RUN ln -s /usr/share/zoneinfo/America/Guayaquil /etc/localtime
-
+# BOOT WILDFLY
 CMD ["/opt/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
-
 EXPOSE 8020
